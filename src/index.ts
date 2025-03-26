@@ -4,10 +4,13 @@ import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
-import { any, z } from "zod";
+import { z } from "zod";
 import { User } from "./views/User";
 import { auth } from "./Auth";
 import { jwtSecret } from "./config";
+import { Content } from "./views/Content";
+import { Tags } from "./views/Tags";
+
 const app = express();
 
 dotenv.config();
@@ -110,7 +113,95 @@ app.post("/api/v1/signIn",async(req: Request,res: Response)=>{
 
 })
 
+app.post("/api/v1/content",auth,async(req: Request,res: Response)=>{
+    let type: string = req.body.type;
+    let link: string = req.body.type;
+    let title: string = req.body.title;
+    let tags: string[] = req.body.tags;
 
+    console.log(req.userId);
+    
+    let u: string | undefined = req.userId;
+    
+    if(!u){
+        res.json({message: "un authorosez"});
+        return;
+    }
+    let userID = u;
+
+    let finalTags = [];
+    //handling tags
+    for (const tag of tags) {
+        let currTag;
+        currTag = await Tags.findOne({title: tag});
+        if(!currTag){
+            await Tags.create({
+                title: tag,
+            });
+            currTag = await Tags.findOne({title: tag});
+        }
+        finalTags.push(currTag?._id);
+    }
+
+    let currContent = {
+        type: type,
+        link: link,
+        title: title,
+        tags: finalTags,
+        userId: userID
+    }
+
+
+    try{
+        await Content.create(currContent);
+        console.log("content added");
+    }catch(e){
+        console.log(e);
+        res.json({message: "Invalid input"});
+        return;
+    }
+    res.json({message: "content added"});
+
+})
+
+app.get("/api/v1/content",auth,async(req: Request, res: Response)=>{
+    let userID = req.userId;
+    console.log(userID);
+    let userContent;
+    try{
+        userContent = await Content.find({userId: userID});
+    }catch(e){
+        res.status(404).json({message: "content not found"});
+    }
+    res.json(userContent);
+})
+
+app.delete("/api/v1/content",auth,async(req: Request, res: Response)=>{
+    let userID = req.userId;
+    let contentID = req.body.contentID;
+    try{
+        await Content.deleteOne({
+            userId: userID,
+            _id: contentID
+        })
+    }catch(e){
+        res.status(500).json({message: "Database problem"});
+    }
+    res.status(200).json({message: "deleted"});
+})
+
+app.get("/api/v1/search",auth,async(req: Request, res: any)=>{
+    let search: string = req.body.search;
+    if(!search){
+        res.json({message: "type anythig in serch for results"});
+    }
+    let currTag = await Tags.findOne({title: search});
+    if(!currTag){
+        return res.status(404).json({message: "Not Found"});
+    }
+    let currContent = await Content.find({ tags: { $in: [currTag] } });
+    res.status(200).json(currContent);
+})
 
 app.listen(process.env.PORT || 3000, () => {
     console.log("server started");
