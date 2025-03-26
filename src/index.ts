@@ -7,6 +7,7 @@ import dotenv from "dotenv";
 import { any, z } from "zod";
 import { User } from "./views/User";
 import { auth } from "./Auth";
+import { jwtSecret } from "./config";
 const app = express();
 
 dotenv.config();
@@ -98,8 +99,8 @@ app.post("/api/v1/signIn",async(req: Request,res: Response)=>{
         res.status(403).json({message: "Wrong password"});
         return;
     }
-    let jwtSecret: string | undefined = process.env.JWT_SECRET;
-    if(!jwtSecret){
+    let JwtSecret = jwtSecret;
+    if(!JwtSecret){
         res.status(500).json({message: "server problem"});
         return;
     }
@@ -109,9 +110,7 @@ app.post("/api/v1/signIn",async(req: Request,res: Response)=>{
 
 })
 
-app.get("/api/v1/secret",auth,(req: Request, res: Response)=>{
-    res.send("welcome special user");
-})
+
 
 app.listen(process.env.PORT || 3000, () => {
     console.log("server started");
