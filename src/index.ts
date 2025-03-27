@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
+import cors from "cors";
 import { z } from "zod";
 import { User } from "./views/User";
 import { auth } from "./Auth";
@@ -11,10 +12,12 @@ import { jwtSecret } from "./config";
 import { Content } from "./views/Content";
 import { Tags } from "./views/Tags";
 
+
 const app = express();
 
 dotenv.config();
 app.use(express.json());
+app.use(cors())
 const saltRounds:number = 5;
 
 const MONGO_URL: string = "mongodb+srv://MukulPretham:MukuL123$$$@cluster0.rfdcz.mongodb.net/SecondBrain"
@@ -29,6 +32,10 @@ app.get("/", (req: Request, res: Response) => {
     res.send("Hello")
 })
 
+app.get("/details",(req: Request,res: Response)=>{
+    let details = jwt.decode("eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6IjE2NTQ0IiwiZW1haWwiOiJyYWtha3VtYXI3MzE3QGdtYWlsLmNvbSIsInRpbWVzdGFtcCI6MTc0MjcyODE4NSwidGVuYW50VHlwZSI6InVzZXIiLCJ0ZW5hbnROYW1lIjoiIiwidGVuYW50SWQiOiIiLCJkaXNwb3NhYmxlIjpmYWxzZX0.djgMIcmMBFEmrlxlYPAtdJg2F33SbNUciYveEekZW8c")
+    res.json(details);
+})
 
 app.post("/api/v1/signUp",async(req: Request,res: any)=>{
     const username: string = req.body.username;
@@ -47,6 +54,8 @@ app.post("/api/v1/signUp",async(req: Request,res: any)=>{
         username: username,
         password: password
     }
+
+    console.log(currUser);
 
     let { success,error } = userSchema.safeParse(currUser);
     if(!success){
@@ -115,7 +124,7 @@ app.post("/api/v1/signIn",async(req: Request,res: Response)=>{
 
 app.post("/api/v1/content",auth,async(req: Request,res: Response)=>{
     let type: string = req.body.type;
-    let link: string = req.body.type;
+    let link: string = req.body.link;
     let title: string = req.body.title;
     let tags: string[] = req.body.tags;
 
