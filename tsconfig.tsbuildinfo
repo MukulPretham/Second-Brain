@@ -1,1 +1,1 @@
-{"root":["./src/auth.ts","./src/config.ts","./src/index.ts","./src/overide.d.ts","./src/views/content.ts","./src/views/links.ts","./src/views/tags.ts","./src/views/user.ts"],"version":"5.8.2"}
+{"root":["./src/auth.ts","./src/utils.ts","./src/config.ts","./src/index.ts","./src/overide.d.ts","./src/test.ts","./src/views/content.ts","./src/views/links.ts","./src/views/sharelinks.ts","./src/views/tags.ts","./src/views/user.ts"],"version":"5.8.2"}

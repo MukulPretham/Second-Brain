@@ -11,6 +11,8 @@ import { auth } from "./Auth";
 import { jwtSecret } from "./config";
 import { Content } from "./views/Content";
 import { Tags } from "./views/Tags";
+import { random } from "./Utils";
+import { ShareLinks } from "./views/ShareLinks";
 
 
 const app = express();
@@ -179,12 +181,12 @@ app.get("/api/v1/content", auth, async (req: Request, res: any) => {
 
     try {
         let finalTags = [];
-        userContent = await Content.find({userId:userID});
+        userContent = await Content.find({ userId: userID });
 
     } catch (e) {
         return res.status(404).json({ message: "content not found" });
     }
-    console.log(userContent);
+
     res.json(userContent);
 })
 
@@ -215,6 +217,50 @@ app.get("/api/v1/search", auth, async (req: Request, res: any) => {
     }
     let currContent = await Content.find({ tags: { $in: [currTag] } });
     res.status(200).json(currContent);
+})
+
+app.post("/api/v1/content/share", auth, async (req: any, res: any) => {
+    let share: boolean = req.body.share;
+    if (!share) {
+        return res.status(411).json({ message: 'Invalid inputs' });
+    }
+
+    let existingLink = await ShareLinks.findOne({ userID: req.userId });
+    if (!existingLink) {
+        try {
+            await ShareLinks.create({
+                hash: random(10),
+                userID: req.userId
+            });
+            let currUser = await ShareLinks.findOne({ userID: req.userId });
+            res.json(currUser);
+            return;
+        } catch (e) {
+            return res.status(500).json({ message: "Databnase Problem" });
+        }
+    }
+
+    res.json(existingLink);
+
+})
+
+app.get("/api/v1/content/share/:hash",async(req,res)=>{
+    let hash:string = req.params.hash;
+    let currLink = await ShareLinks.findOne({hash: hash});
+    if(!currLink){
+        res.status(404).json({message: "Not Found"});
+        return
+    }
+    let currUser = await User.findOne({_id: currLink.userID});
+    let currContent = await Content.find({
+        userId: currUser?._id
+    })
+
+    res.json({
+        username: currUser?.username,
+        content: currContent
+    })
+
 })
 
 app.listen(process.env.PORT || 3000, () => {
